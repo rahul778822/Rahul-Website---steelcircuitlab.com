@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steel Circuit Lab | Coming Soon</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .container {
+            border: 2px solid #38bdf8;
+            padding: 3rem;
+            border-radius: 20px;
+            background: rgba(30, 41, 59, 0.7);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            color: #38bdf8;
+        }
+        p {
+            font-size: 1.2rem;
+            color: #94a3b8;
+        }
+        .status-dot {
+            height: 12px;
+            width: 12px;
+            background-color: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            animation: blink 1.5s infinite;
+        }
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>STEEL CIRCUIT LAB</h1>
+        <p><span class="status-dot"></span>Website is officially online!</p>
+        <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
+        <p>Innovation in Robotics & AI</p>
+    </div>
+</body>
+</html>
