@@ -1,59 +1,585 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Steel Circuit Lab | Coming Soon</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            text-align: center;
-        }
-        .container {
-            border: 2px solid #38bdf8;
-            padding: 3rem;
-            border-radius: 20px;
-            background: rgba(30, 41, 59, 0.7);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        h1 {
-            font-size: 3rem;
-            margin-bottom: 10px;
-            color: #38bdf8;
-        }
-        p {
-            font-size: 1.2rem;
-            color: #94a3b8;
-        }
-        .status-dot {
-            height: 12px;
-            width: 12px;
-            background-color: #22c55e;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 10px;
-            animation: blink 1.5s infinite;
-        }
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.3; }
-            100% { opacity: 1; }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sticky Notes</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: #1a1a2e;
+      background-image: radial-gradient(ellipse at 20% 50%, #16213e 0%, #1a1a2e 50%, #0f3460 100%);
+      font-family: 'Segoe UI', sans-serif;
+      overflow-x: hidden;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 32px;
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    header h1 { color: #fff; font-size: 1.5rem; font-weight: 700; letter-spacing: 0.5px; }
+    header h1 span { color: #f9ca24; }
+
+    .controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+    .color-picker { display: flex; gap: 8px; align-items: center; }
+
+    .color-btn {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 2px solid transparent; cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .color-btn:hover, .color-btn.active { transform: scale(1.25); border-color: #fff; }
+
+    .add-btn {
+      display: flex; align-items: center; gap: 7px;
+      padding: 9px 20px; background: #f9ca24; color: #1a1a2e;
+      border: none; border-radius: 25px; font-size: 0.9rem;
+      font-weight: 700; cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .add-btn:hover { background: #f0b90b; transform: translateY(-1px); }
+
+    .pdf-btn {
+      display: flex; align-items: center; gap: 7px;
+      padding: 9px 20px; background: #e74c3c; color: #fff;
+      border: none; border-radius: 25px; font-size: 0.9rem;
+      font-weight: 700; cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .pdf-btn:hover { background: #c0392b; transform: translateY(-1px); }
+
+    .board {
+      position: relative;
+      min-height: calc(100vh - 120px);
+      padding: 30px;
+    }
+
+    .empty-state {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center; color: rgba(255,255,255,0.25);
+      pointer-events: none; transition: opacity 0.3s;
+    }
+    .empty-state svg { width: 64px; height: 64px; margin-bottom: 14px; opacity: 0.5; }
+    .empty-state p { font-size: 1.05rem; }
+
+    .note {
+      position: absolute; width: 220px; min-height: 200px;
+      border-radius: 4px; padding: 0;
+      box-shadow: 4px 6px 24px rgba(0,0,0,0.45), 0 1px 0 rgba(255,255,255,0.1) inset;
+      cursor: grab; user-select: none;
+      transition: box-shadow 0.2s, transform 0.15s;
+      display: flex; flex-direction: column;
+    }
+    .note:hover { box-shadow: 6px 10px 32px rgba(0,0,0,0.55); z-index: 10; }
+    .note.dragging {
+      cursor: grabbing;
+      box-shadow: 12px 18px 48px rgba(0,0,0,0.7);
+      transform: rotate(2deg) scale(1.03);
+      z-index: 999;
+    }
+
+    .note-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 12px 6px; border-radius: 4px 4px 0 0;
+      background: rgba(0,0,0,0.12); cursor: grab;
+    }
+    .note.dragging .note-header { cursor: grabbing; }
+
+    .note-dots { display: flex; gap: 4px; }
+    .note-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(0,0,0,0.2); }
+    .note-actions { display: flex; gap: 4px; }
+
+    .note-color-btn, .note-delete-btn {
+      width: 22px; height: 22px; border: none; border-radius: 50%;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; font-size: 12px;
+      background: rgba(0,0,0,0.15); color: rgba(0,0,0,0.5);
+      transition: background 0.15s, color 0.15s;
+    }
+    .note-color-btn:hover, .note-delete-btn:hover { background: rgba(0,0,0,0.3); color: rgba(0,0,0,0.8); }
+
+    .note-body { flex: 1; padding: 12px 14px 14px; }
+    .note-text {
+      width: 100%; height: 100%; min-height: 150px;
+      border: none; background: transparent; resize: none;
+      font-size: 0.9rem; line-height: 1.6; color: rgba(0,0,0,0.75);
+      font-family: 'Segoe UI', sans-serif; outline: none; cursor: text;
+    }
+    .note-text::placeholder { color: rgba(0,0,0,0.3); }
+
+    .note-footer {
+      padding: 6px 14px 10px; font-size: 0.7rem;
+      color: rgba(0,0,0,0.4); display: flex; justify-content: space-between;
+    }
+
+    .color-palette-popup {
+      position: absolute;
+      background: rgba(30,30,50,0.95); backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1); border-radius: 10px;
+      padding: 10px; display: flex; gap: 8px; z-index: 1000;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .palette-color {
+      width: 24px; height: 24px; border-radius: 50%;
+      border: 2px solid transparent; cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+    }
+    .palette-color:hover { transform: scale(1.2); border-color: #fff; }
+
+    .note-resize {
+      position: absolute; bottom: 3px; right: 3px;
+      width: 12px; height: 12px; cursor: se-resize; opacity: 0.35;
+    }
+    .note-resize svg { width: 100%; height: 100%; }
+
+    /* PDF Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      z-index: 2000; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #1e2140;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px; padding: 32px;
+      width: 90%; max-width: 480px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    }
+
+    .modal h2 { color: #fff; font-size: 1.3rem; margin-bottom: 6px; }
+    .modal p { color: rgba(255,255,255,0.45); font-size: 0.85rem; margin-bottom: 24px; }
+
+    .drop-zone {
+      border: 2px dashed rgba(255,255,255,0.2);
+      border-radius: 12px; padding: 36px 20px;
+      text-align: center; cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 20px;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: #e74c3c;
+      background: rgba(231,76,60,0.06);
+    }
+    .drop-zone svg { margin-bottom: 12px; opacity: 0.5; }
+    .drop-zone p { color: rgba(255,255,255,0.5); font-size: 0.9rem; }
+    .drop-zone span { color: #e74c3c; font-weight: 600; }
+    .drop-zone input { display: none; }
+
+    .file-name {
+      color: #f9ca24; font-size: 0.85rem;
+      margin-bottom: 16px; display: none;
+      background: rgba(249,202,36,0.08);
+      padding: 8px 14px; border-radius: 8px;
+    }
+
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+    .convert-btn {
+      padding: 10px 24px; background: #e74c3c; color: #fff;
+      border: none; border-radius: 25px; font-size: 0.9rem;
+      font-weight: 700; cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .convert-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .convert-btn:not(:disabled):hover { background: #c0392b; }
+
+    .cancel-btn {
+      padding: 10px 20px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7);
+      border: none; border-radius: 25px; font-size: 0.9rem;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .cancel-btn:hover { background: rgba(255,255,255,0.15); }
+
+    .status-msg {
+      font-size: 0.82rem; margin-top: 14px;
+      text-align: center; min-height: 20px;
+    }
+    .status-msg.success { color: #a8e6cf; }
+    .status-msg.error { color: #ff6b6b; }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 14px;
+      color: rgba(255,255,255,0.3);
+      font-size: 0.78rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    footer strong { color: rgba(255,255,255,0.5); }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>STEEL CIRCUIT LAB</h1>
-        <p><span class="status-dot"></span>Website is officially online!</p>
-        <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
-        <p>Innovation in Robotics & AI</p>
+
+<header>
+  <h1>Sticky <span>Notes</span></h1>
+  <div class="controls">
+    <div class="color-picker" id="colorPicker">
+      <div class="color-btn active" style="background:#f9ca24" data-color="#f9ca24"></div>
+      <div class="color-btn" style="background:#ff6b6b" data-color="#ff6b6b"></div>
+      <div class="color-btn" style="background:#a8e6cf" data-color="#a8e6cf"></div>
+      <div class="color-btn" style="background:#74b9ff" data-color="#74b9ff"></div>
+      <div class="color-btn" style="background:#fd79a8" data-color="#fd79a8"></div>
+      <div class="color-btn" style="background:#d4a5f5" data-color="#d4a5f5"></div>
     </div>
+    <button class="add-btn" id="addBtn">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      Add Note
+    </button>
+    <button class="pdf-btn" id="pdfBtn">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <path d="M2 1h7l3 3v9H2V1z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        <path d="M9 1v3h3M4 7h6M4 9.5h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      Word → PDF
+    </button>
+  </div>
+</header>
+
+<div class="board" id="board">
+  <div class="empty-state" id="emptyState">
+    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="8" y="8" width="40" height="48" rx="4" fill="rgba(255,255,255,0.15)"/>
+      <rect x="16" y="20" width="24" height="3" rx="1.5" fill="rgba(255,255,255,0.3)"/>
+      <rect x="16" y="28" width="20" height="3" rx="1.5" fill="rgba(255,255,255,0.3)"/>
+      <rect x="16" y="36" width="16" height="3" rx="1.5" fill="rgba(255,255,255,0.3)"/>
+    </svg>
+    <p>Click <strong>Add Note</strong> to get started</p>
+  </div>
+</div>
+
+<!-- Word to PDF Modal -->
+<div class="modal-overlay" id="pdfModal">
+  <div class="modal">
+    <h2>Word → PDF Converter</h2>
+    <p>Upload a .docx file and download it as a PDF instantly</p>
+    <div class="drop-zone" id="dropZone">
+      <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+        <path d="M20 28V12M20 12L14 18M20 12L26 18" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8 30h24" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <p>Drag & drop your <span>.docx file</span> here<br>or <span>click to browse</span></p>
+      <input type="file" id="fileInput" accept=".docx" />
+    </div>
+    <div class="file-name" id="fileName"></div>
+    <div class="modal-actions">
+      <button class="cancel-btn" id="cancelBtn">Cancel</button>
+      <button class="convert-btn" id="convertBtn" disabled>Convert & Download</button>
+    </div>
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+</div>
+
+<footer>
+  Built by <strong>Rahul Grover</strong> &nbsp;|&nbsp; <a href="https://wa.me/919818478560" target="_blank" style="color:#25D366;text-decoration:none;font-weight:600;">💬 9818478560</a> &nbsp;|&nbsp; <a href="https://supermariobros.io" target="_blank" style="color:#f9ca24;text-decoration:none;font-weight:600;">🍄 Play Mario</a>
+</footer>
+
+<script>
+  const board = document.getElementById('board');
+  const addBtn = document.getElementById('addBtn');
+  const colorPicker = document.getElementById('colorPicker');
+  const emptyState = document.getElementById('emptyState');
+  const pdfBtn = document.getElementById('pdfBtn');
+  const pdfModal = document.getElementById('pdfModal');
+  const cancelBtn = document.getElementById('cancelBtn');
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('fileInput');
+  const fileNameEl = document.getElementById('fileName');
+  const convertBtn = document.getElementById('convertBtn');
+  const statusMsg = document.getElementById('statusMsg');
+
+  const NOTE_COLORS = ['#f9ca24','#ff6b6b','#a8e6cf','#74b9ff','#fd79a8','#d4a5f5'];
+  let selectedColor = '#f9ca24';
+  let notes = loadNotes();
+  let zCounter = 10;
+  let selectedFile = null;
+
+  // Color picker
+  colorPicker.querySelectorAll('.color-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      colorPicker.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedColor = btn.dataset.color;
+    });
+  });
+
+  // Add note
+  addBtn.addEventListener('click', () => {
+    const boardRect = board.getBoundingClientRect();
+    const x = 30 + Math.random() * Math.max(100, boardRect.width - 280);
+    const y = 30 + Math.random() * Math.max(100, boardRect.height - 280);
+    createNote({ id: uid(), color: selectedColor, x, y, text: '', created: Date.now() });
+  });
+
+  // PDF Modal
+  pdfBtn.addEventListener('click', () => { pdfModal.classList.add('open'); resetModal(); });
+  cancelBtn.addEventListener('click', () => pdfModal.classList.remove('open'));
+  pdfModal.addEventListener('click', e => { if (e.target === pdfModal) pdfModal.classList.remove('open'); });
+
+  dropZone.addEventListener('click', () => fileInput.click());
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f && f.name.endsWith('.docx')) setFile(f);
+    else showStatus('Please upload a .docx file', 'error');
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) setFile(fileInput.files[0]);
+  });
+
+  function setFile(f) {
+    selectedFile = f;
+    fileNameEl.textContent = '📄 ' + f.name;
+    fileNameEl.style.display = 'block';
+    convertBtn.disabled = false;
+    statusMsg.textContent = '';
+  }
+
+  function resetModal() {
+    selectedFile = null;
+    fileInput.value = '';
+    fileNameEl.style.display = 'none';
+    convertBtn.disabled = true;
+    statusMsg.textContent = '';
+  }
+
+  convertBtn.addEventListener('click', async () => {
+    if (!selectedFile) return;
+    convertBtn.disabled = true;
+    convertBtn.textContent = 'Converting...';
+    statusMsg.className = 'status-msg';
+    statusMsg.textContent = 'Reading file...';
+
+    try {
+      const arrayBuffer = await selectedFile.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer });
+      const text = result.value;
+
+      statusMsg.textContent = 'Generating PDF...';
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+
+      const margin = 15;
+      const pageWidth = doc.internal.pageSize.getWidth() - margin * 2;
+      const lineHeight = 7;
+      const pageHeight = doc.internal.pageSize.getHeight() - margin * 2;
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(11);
+      doc.setTextColor(30, 30, 30);
+
+      const lines = doc.splitTextToSize(text, pageWidth);
+      let y = margin;
+
+      lines.forEach(line => {
+        if (y + lineHeight > pageHeight + margin) {
+          doc.addPage();
+          y = margin;
+        }
+        doc.text(line, margin, y);
+        y += lineHeight;
+      });
+
+      const pdfName = selectedFile.name.replace('.docx', '.pdf');
+      doc.save(pdfName);
+
+      statusMsg.className = 'status-msg success';
+      statusMsg.textContent = '✓ PDF downloaded successfully!';
+    } catch (err) {
+      statusMsg.className = 'status-msg error';
+      statusMsg.textContent = 'Error converting file. Please try again.';
+    }
+
+    convertBtn.disabled = false;
+    convertBtn.textContent = 'Convert & Download';
+  });
+
+  // Sticky Notes logic
+  function createNote(data) {
+    notes = notes.filter(n => n.id !== data.id);
+    notes.push(data);
+    renderNote(data);
+    saveNotes();
+    updateEmpty();
+  }
+
+  function renderNote(data) {
+    const existing = document.getElementById('note-' + data.id);
+    if (existing) existing.remove();
+
+    const note = document.createElement('div');
+    note.className = 'note';
+    note.id = 'note-' + data.id;
+    note.style.cssText = `left:${data.x}px;top:${data.y}px;background:${data.color};z-index:${zCounter++};`;
+
+    note.innerHTML = `
+      <div class="note-header" data-drag="true">
+        <div class="note-dots">
+          <div class="note-dot"></div><div class="note-dot"></div><div class="note-dot"></div>
+        </div>
+        <div class="note-actions">
+          <button class="note-color-btn" title="Change color">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor"><circle cx="5" cy="5" r="4"/></svg>
+          </button>
+          <button class="note-delete-btn" title="Delete note">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+              <path d="M2 2l6 6M8 2L2 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="note-body">
+        <textarea class="note-text" placeholder="Write something...">${escapeHtml(data.text)}</textarea>
+      </div>
+      <div class="note-footer">
+        <span>${formatDate(data.created)}</span>
+        <span>${data.text.length} chars</span>
+      </div>
+      <div class="note-resize" title="Resize">
+        <svg viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M10 2L2 10M6 10L10 6" stroke="rgba(0,0,0,0.4)" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </div>
+    `;
+
+    board.appendChild(note);
+
+    const textarea = note.querySelector('.note-text');
+    const footer = note.querySelector('.note-footer span:last-child');
+
+    textarea.addEventListener('input', () => {
+      data.text = textarea.value;
+      footer.textContent = data.text.length + ' chars';
+      saveNotes();
+    });
+    textarea.addEventListener('mousedown', e => e.stopPropagation());
+
+    note.querySelector('.note-delete-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      note.style.transform = 'scale(0.8)';
+      note.style.opacity = '0';
+      note.style.transition = 'transform 0.2s, opacity 0.2s';
+      setTimeout(() => {
+        note.remove();
+        notes = notes.filter(n => n.id !== data.id);
+        saveNotes();
+        updateEmpty();
+      }, 200);
+    });
+
+    note.querySelector('.note-color-btn').addEventListener('click', e => {
+      e.stopPropagation();
+      showColorPalette(note, data);
+    });
+
+    makeDraggable(note, data);
+    makeResizable(note, data);
+    note.addEventListener('mousedown', () => { note.style.zIndex = ++zCounter; });
+  }
+
+  function showColorPalette(note, data) {
+    document.querySelectorAll('.color-palette-popup').forEach(p => p.remove());
+    const popup = document.createElement('div');
+    popup.className = 'color-palette-popup';
+    const noteRect = note.getBoundingClientRect();
+    const boardRect = board.getBoundingClientRect();
+    NOTE_COLORS.forEach(color => {
+      const btn = document.createElement('div');
+      btn.className = 'palette-color';
+      btn.style.background = color;
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        data.color = color;
+        note.style.background = color;
+        saveNotes();
+        popup.remove();
+      });
+      popup.appendChild(btn);
+    });
+    popup.style.left = (noteRect.left - boardRect.left) + 'px';
+    popup.style.top = (noteRect.bottom - boardRect.top + 6) + 'px';
+    board.appendChild(popup);
+    setTimeout(() => { document.addEventListener('click', () => popup.remove(), { once: true }); }, 0);
+  }
+
+  function makeDraggable(note, data) {
+    let dragging = false, ox = 0, oy = 0;
+    const header = note.querySelector('[data-drag]');
+    header.addEventListener('mousedown', e => {
+      if (e.target.closest('button')) return;
+      dragging = true;
+      note.classList.add('dragging');
+      ox = e.clientX - note.offsetLeft;
+      oy = e.clientY - note.offsetTop;
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      let nx = Math.max(0, Math.min(e.clientX - ox, board.offsetWidth - note.offsetWidth));
+      let ny = Math.max(0, Math.min(e.clientY - oy, board.offsetHeight - note.offsetHeight));
+      note.style.left = nx + 'px';
+      note.style.top = ny + 'px';
+      data.x = nx; data.y = ny;
+    });
+    document.addEventListener('mouseup', () => {
+      if (dragging) { dragging = false; note.classList.remove('dragging'); saveNotes(); }
+    });
+  }
+
+  function makeResizable(note, data) {
+    const handle = note.querySelector('.note-resize');
+    let resizing = false, startX, startY, startW, startH;
+    handle.addEventListener('mousedown', e => {
+      e.stopPropagation();
+      resizing = true;
+      startX = e.clientX; startY = e.clientY;
+      startW = note.offsetWidth; startH = note.offsetHeight;
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', e => {
+      if (!resizing) return;
+      note.style.width = Math.max(180, startW + (e.clientX - startX)) + 'px';
+      note.style.minHeight = Math.max(160, startH + (e.clientY - startY)) + 'px';
+    });
+    document.addEventListener('mouseup', () => { resizing = false; });
+  }
+
+  function loadNotes() {
+    try { return JSON.parse(localStorage.getItem('sticky-notes') || '[]'); } catch { return []; }
+  }
+  function saveNotes() { localStorage.setItem('sticky-notes', JSON.stringify(notes)); }
+  function updateEmpty() { emptyState.style.opacity = notes.length === 0 ? '1' : '0'; }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+  function formatDate(ts) { return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); }
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  notes.forEach(n => renderNote(n));
+  updateEmpty();
+</script>
 </body>
 </html>
