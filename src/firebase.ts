@@ -8,14 +8,15 @@ import {
 } from "firebase/auth";
 
 const firebaseConfig = {
-  projectId: "fabled-involution-q74w7",
-  appId: "1:1051212579776:web:c9cf3ee91f22d9dc32fe25",
-  apiKey: "AIzaSyAAZM5CKZApbEp83Fjke32tIYQmVr3Q4CA",
-  authDomain: "fabled-involution-q74w7.firebaseapp.com",
-  firestoreDatabaseId: "ai-studio-d2e144f0-c3c3-4e4b-b17f-f4b1db425080",
-  storageBucket: "fabled-involution-q74w7.firebasestorage.app",
-  messagingSenderId: "1051212579776"
-};
+    apiKey: "AIzaSyBfwZkGAwiGTALq8-clYU7iqFFXzJsqsbY",
+    authDomain: "steelcircuitlab.firebaseapp.com",
+    projectId: "steelcircuitlab",
+    storageBucket: "steelcircuitlab.firebasestorage.app",
+    messagingSenderId: "734672895679",
+    appId: "1:734672895679:web:6fae807e2c3bacf3f8100a",
+    measurementId: "G-E499BX9RW8"
+  };
+
 
 // Initialize Firebase
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
