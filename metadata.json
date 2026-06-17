@@ -1,6 +1,0 @@
-{
-  "name": "Steel Circuit Lab",
-  "description": "Premium robotics components and assemblies for innovators. Browse, add to cart, and order via WhatsApp.",
-  "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
-}
