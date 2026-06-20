@@ -1,0 +1,107 @@
+{
+  "company": {
+    "name": "Steel Circuit Lab",
+    "description": "High-speed laboratory coordinator & logistics dispatcher.",
+    "whatsappNumber": "+917303177088",
+    "deliveryDays": "3–5 days across India",
+    "bentoAlert": "Pan India high-speed delivery within 3–5 days"
+  },
+  "products": [
+    {
+      "id": 1,
+      "name": "Arduino Uno R3",
+      "description": "Primary Controller Node",
+      "price": 300,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/3/30/Arduino_Uno_R3.jpg",
+      "isBestSeller": true,
+      "category": "Controllers"
+    },
+    {
+      "id": 2,
+      "name": "ESP32 DevKit",
+      "description": "WiFi/BT Comm Module",
+      "price": 320,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/2/20/ESP32_NodeMCU_Development_Board_1.jpg",
+      "isBestSeller": true,
+      "category": "Controllers"
+    },
+    {
+      "id": 3,
+      "name": "MG995 Servo",
+      "description": "High Torque Actuator",
+      "price": 250,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/7/78/Model_aircraft_servo.jpg",
+      "category": "Actuators & Drivers"
+    },
+    {
+      "id": 4,
+      "name": "BTS7960 Driver",
+      "description": "43A Motor Controller",
+      "price": 420,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/d/df/Electronic_component_Motor_driver_module_L298_DSCF1722.jpg",
+      "category": "Actuators & Drivers"
+    },
+    {
+      "id": 5,
+      "name": "4WD Chassis Kit",
+      "description": "Acrylic Robot Base",
+      "price": 450,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/b/b5/Arduino_robot_kit_chassis_2.jpg",
+      "category": "Robot Kits"
+    },
+    {
+      "id": 6,
+      "name": "HC-SR04 Sensor",
+      "description": "Ultrasonic Distance Module",
+      "price": 80,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/e/ee/HC-SR04_ultrasonic_sensor.jpg",
+      "category": "Sensors"
+    },
+    {
+      "id": 7,
+      "name": "IR Sensor Module",
+      "description": "Obstacle Avoidance Sensor",
+      "price": 60,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Reflective_infrared_sensor.jpg",
+      "category": "Sensors"
+    },
+    {
+      "id": 8,
+      "name": "MPU-6050 IMU",
+      "description": "6-axis Accel & Gyro",
+      "price": 180,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/a/aa/Gyroscope-and-Accelerometer-Module_MPU-6050_2.jpg",
+      "category": "Sensors"
+    },
+    {
+      "id": 9,
+      "name": "Human Follower Robot",
+      "description": "Motion Tracking Assembly",
+      "price": 850,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/1/1b/Kinect_Robot_v2.0.jpg",
+      "category": "Robot Kits"
+    },
+    {
+      "id": 10,
+      "name": "Edge Detector Robot",
+      "description": "Surface Boundary Detection",
+      "price": 750,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Sumo_robot_detecting_border.jpg",
+      "category": "Robot Kits"
+    },
+    {
+      "id": 11,
+      "name": "Line Follower Robot Kit",
+      "description": "Complete Autonomous System Assembly",
+      "price": 650,
+      "image": "https://upload.wikimedia.org/wikipedia/commons/7/7b/A_line_follower_robot.JPG",
+      "isBestSeller": true,
+      "category": "Robot Kits"
+    }
+  ],
+  "system": {
+    "status": "Online",
+    "description": "Laboratory controllers and real-time WhatsApp coordination pipelines are fully synced.",
+    "isSecure": true
+  }
+}
